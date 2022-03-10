@@ -9,8 +9,6 @@ db_url = os.getenv('DB_URI')
 
 engine = create_engine(db_url, pool_size=100, echo=False)
 
-
-# session_factory = sessionmaker(bind=engine)
 Session = scoped_session(sessionmaker())
 
 def init_session():
