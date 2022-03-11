@@ -2,7 +2,9 @@ import json
 import falcon
 from addfile import adder
 from database import init_session, Session, engine
-from models import UserTable
+from random import randint
+from textmsg import Sendotp
+from tasks import celerymailer
 
 class Home:
     def on_get(self, req, resp):
@@ -99,6 +101,7 @@ class UserSignup:
 
         if not count:
             d ={
+                "error":"404",
                 "msg":"No user found with given id"
             }
             resp.body= json.dumps(d)
@@ -119,10 +122,44 @@ class UserSignup:
             resp.status = falcon.HTTP_OK
             
             return resp
-            
+
+class otp:
+    def on_get(self, req, resp, number):
+        otp = randint(1000,9999)
+        Sendotp(otp,number)
+        
+        d={
+            "msg":"Otp sent to {}".format(number)
+        }
+
+        resp.status = falcon.HTTP_OK
+        resp.body= json.dumps(d)
+
+        return resp
+
+
+class mail:
+    def on_get(self, req, resp):
+        args = req.media
+        email = args.get('email')
+        body = "<h1>Hello bois!!!!!!!!!</h1>"
+        celerymailer.delay(email, body)
+
+        d={
+            "msg":"Mail sent to {}".format(email)
+        }
+        resp.status = falcon.HTTP_OK
+        resp.body= json.dumps(d)
+        return resp
+
+
+
+
 
 
 init_session()
 api = falcon.App()
 api.add_route('/',Home())
 api.add_route('/users',UserSignup())
+api.add_route('/sendotp/{number}',otp())
+api.add_route('/sendmail',mail())
